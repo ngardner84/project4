@@ -92,7 +92,7 @@ function App() {
           </div>
           <div className="icon-temp">
             <img
-              className=""
+              className="icon"
               src={`https://openweathermap.org/img/wn/${weather.data.weather[0]?.icon}@2x.png`}
               alt={weather.data.weather[0]?.description}
             />
