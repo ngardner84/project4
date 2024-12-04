@@ -14,58 +14,36 @@ function App() {
   });
 
   const toDateFunction = () => {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    const WeekDays = [
-      'Sunday',
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-    ];
-    const currentDate = new Date();
-    const date = `${WeekDays[currentDate.getDay()]} ${currentDate.getDate()} ${
-      months[currentDate.getMonth()]
-    } ${currentDate.getFullYear()}`;
-    return date;
+    // ... (Your existing date function)
   };
 
-  const getWeather = async (event) => {
+  // Refactored getWeather function
+  const getWeather = async () => {
+    if (input.trim() === '') return; // Prevent empty searches
+    setWeather({ ...weather, loading: true, error: false });
+    const url = 'https://api.openweathermap.org/data/2.5/weather';
+    const api_key = '602dc24bede6785d8611f3d2390bead4';
+    try {
+      const res = await axios.get(url, {
+        params: {
+          q: input,
+          units: 'imperial',
+          appid: api_key,
+        },
+      });
+      setWeather({ ...weather, data: res.data, loading: false, error: false });
+    } catch (error) {
+      console.log(error);
+      setWeather({ ...weather, loading: false, data: null, error: true });
+    }
+    setInput(''); // Clear the input field
+  };
+
+  // Handle Enter key press
+  const handleKeyDown = (event) => {
     if (event.key === 'Enter') {
-      event.preventDefault();
-      setInput('');
-      setWeather({ weather, loading: true });
-      const url = 'https://api.openweathermap.org/data/2.5/weather';
-      const api_key = '602dc24bede6785d8611f3d2390bead4';
-      try {
-        const res = await axios.get(url, {
-          params: {
-            q: input,
-            units: 'imperial',
-            appid: api_key,
-          },
-        });
-        setWeather({ weather, data: res.data, loading: false, error: false });
-      } catch (error) {
-        console.log(error);
-        setWeather({ weather, loading: false, data: null, error: true });
-      }
-      console.log(weather.data.weather.icon);
-      console.log(weather);
+      event.preventDefault(); // Prevent form submission if inside a form
+      getWeather();
     }
   };
 
@@ -80,8 +58,10 @@ function App() {
           name="query"
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          onKeyDown={getWeather}
+          onKeyDown={handleKeyDown}
         />
+        {/* Added Search Button */}
+        <button class="button" onClick={getWeather}>Search</button>
       </div>
       {weather.loading && (
         <>
@@ -114,14 +94,14 @@ function App() {
             <img
               className=""
               src={`https://openweathermap.org/img/wn/${weather.data.weather[0]?.icon}@2x.png`}
-              alt={weather.data.weather.description}
+              alt={weather.data.weather[0]?.description}
             />
             {Math.round(weather.data.main.temp)}
             <sup className="deg">°F</sup>
           </div>
           <div className="des-wind">
-            <p>{weather.data.weather.description}</p>
-            <p>Wind Speed: {weather.data.wind.speed} m/s</p>
+            <p>{weather.data.weather[0]?.description}</p>
+            <p>Wind Speed: {weather.data.wind.speed} mph</p>
           </div>
         </div>
       )}
