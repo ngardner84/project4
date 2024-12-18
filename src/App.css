@@ -55,13 +55,16 @@ display: flex;
 flex-direction: column;
 justify-content: center;
 align-items: center;
-width: 600px;
+width: fit-content;
+min-width: 600px;
 min-height: 440px;
 background-color: rgb(255, 255, 255);
 text-align: center;
 margin: 128px auto;
 border-radius: 10px;
 padding-bottom: 32px;
+padding-left: 32px;
+padding-right: 32px;
 box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 .city-search {
@@ -154,4 +157,19 @@ align-items: center;
   width: 80px;
   height: 80px;
   vertical-align: middle;
+}
+.forecast-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between; 
+  align-items: flex-start;
+  gap: 20px; /* optional spacing between cards */
+  margin-top: 20px;
+}
+.forecast-day {
+  background: #f0f0f0; /* optional styling */
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  width: 150px; /* a fixed width helps maintain uniform sizing */
 }

@@ -13,16 +13,48 @@ function App() {
     error: false,
   });
 
-  const toDateFunction = () => {
-    // ... (Your existing date function)
+  const api_key = '602dc24bede6785d8611f3d2390bead4';
+
+
+  const toDateFunction = (dt) => {
+    // Convert Unix timestamp into a human-readable date
+    const date = new Date(dt * 1000);
+    const options = { weekday: 'long', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString(undefined, options);
   };
 
-  // Refactored getWeather function
+  const processForecastData = (list) => {
+    // Create a map keyed by date (YYYY-MM-DD)
+    const forecastByDate = {};
+
+    list.forEach(item => {
+      const dateTime = item.dt_txt;
+      const datePart = dateTime.split(' ')[0];
+      if (!forecastByDate[datePart]) {
+        forecastByDate[datePart] = [];
+      }
+      forecastByDate[datePart].push(item);
+    });
+
+    // Choose one entry per date (using the midday forecast)
+    const dailyForecasts = Object.keys(forecastByDate).map(date => {
+      const dayData = forecastByDate[date];
+      // Find a forecast closest to 12:00:00, or pick the middle one
+      const middayIndex = Math.floor(dayData.length / 2);
+      return dayData[middayIndex];
+    });
+
+    // You likely only want 5 days
+    return dailyForecasts.slice(0, 5);
+  };
+
+  // Fetch current weather to get coords, then fetch 5-day forecast
   const getWeather = async () => {
     if (input.trim() === '') return; // Prevent empty searches
     setWeather({ ...weather, loading: true, error: false });
-    const url = 'https://api.openweathermap.org/data/2.5/weather';
-    const api_key = '602dc24bede6785d8611f3d2390bead4';
+
+    // Using the 5 day/3 hour forecast endpoint
+    const url = 'https://api.openweathermap.org/data/2.5/forecast';
     try {
       const res = await axios.get(url, {
         params: {
@@ -31,10 +63,19 @@ function App() {
           appid: api_key,
         },
       });
-      setWeather({ ...weather, data: res.data, loading: false, error: false });
+
+      const processed = processForecastData(res.data.list);
+
+      setWeather({
+        ...weather,
+        data: res.data,
+        dailyForecast: processed,
+        loading: false,
+        error: false
+      });
     } catch (error) {
       console.log(error);
-      setWeather({ ...weather, loading: false, data: null, error: true });
+      setWeather({ ...weather, loading: false, data: null, dailyForecast: [], error: true });
     }
     setInput(''); // Clear the input field
   };
@@ -42,7 +83,7 @@ function App() {
   // Handle Enter key press
   const handleKeyDown = (event) => {
     if (event.key === 'Enter') {
-      event.preventDefault(); // Prevent form submission if inside a form
+      event.preventDefault(); 
       getWeather();
     }
   };
@@ -60,9 +101,9 @@ function App() {
           onChange={(event) => setInput(event.target.value)}
           onKeyDown={handleKeyDown}
         />
-        {/* Added Search Button */}
-        <button class="button" onClick={getWeather}>Search</button>
+        <button className="button" onClick={getWeather}>Search</button>
       </div>
+  
       {weather.loading && (
         <>
           <br />
@@ -70,6 +111,7 @@ function App() {
           <Oval type="Oval" color="black" height={100} width={100} />
         </>
       )}
+  
       {weather.error && (
         <>
           <br />
@@ -80,28 +122,39 @@ function App() {
           </span>
         </>
       )}
+  
       {weather.data && (
         <div>
+          {/* Current City and Country */}
           <div className="city-name">
             <h2>
-              {weather.data.name}, {weather.data.sys.country}
+              {weather.data.city.name}, {weather.data.city.country}
             </h2>
           </div>
-          <div className="date">
-            <span>{toDateFunction()}</span>
-          </div>
-          <div className="icon-temp">
-            <img
-              className="icon"
-              src={`https://openweathermap.org/img/wn/${weather.data.weather[0]?.icon}@2x.png`}
-              alt={weather.data.weather[0]?.description}
-            />
-            {Math.round(weather.data.main.temp)}
-            <sup className="deg">°F</sup>
-          </div>
-          <div className="des-wind">
-            <p>{weather.data.weather[0]?.description}</p>
-            <p>Wind Speed: {weather.data.wind.speed} mph</p>
+  
+          {/* 5-Day Forecast */}
+          <h3>5-Day Forecast</h3>
+          <div className="forecast-container">
+            {weather.dailyForecast.map((day, index) => {
+              const dayDate = new Date(day.dt_txt); 
+              const options = { weekday: 'long', month: 'long', day: 'numeric' };
+              /* Convert the date to a human-readable format */
+              const dateString = dayDate.toLocaleDateString(undefined, options);
+              return (
+                <div key={index} className="forecast-day">
+                  <div className="forecast-date">{dateString}</div>
+                  <img
+                    className="forecast-icon"
+                    src={`https://openweathermap.org/img/wn/${day.weather[0]?.icon}@2x.png`}
+                    alt={day.weather[0]?.description}
+                  />
+                  <div className="forecast-temps">
+                    <span className="temp">{Math.round(day.main.temp)}°F</span>
+                  </div>
+                  <div className="forecast-description">{day.weather[0]?.description}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
