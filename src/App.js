@@ -15,14 +15,6 @@ function App() {
 
   const api_key = '602dc24bede6785d8611f3d2390bead4';
 
-
-  const toDateFunction = (dt) => {
-    // Convert Unix timestamp into a human-readable date
-    const date = new Date(dt * 1000);
-    const options = { weekday: 'long', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString(undefined, options);
-  };
-
   const processForecastData = (list) => {
     // Create a map keyed by date (YYYY-MM-DD)
     const forecastByDate = {};
